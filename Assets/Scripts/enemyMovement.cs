@@ -1,50 +1,52 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.AI;
 
 public class enemyMovement : MonoBehaviour
 {
 	[SerializeField] private Rigidbody2D rb;
 	[SerializeField] private float moveSpeed;
+	private NavMeshAgent agent;
+	private int waypointIndex = 0;  // Vị trí hiện tại trong danh sách các điểm
+	private Transform[] waypoints;
 
-	private Transform target;
-	private int pathIndex = 0;
+	//private Transform target;
+	//private int pathIndex = 0;
 	private float baseSpeed;
 
-	private void Awake()
-	{
-		baseSpeed = moveSpeed;
-		rb = GetComponent<Rigidbody2D>();
-		
-	}
+	//private void Awake()
+	//{
+	//	agent = GetComponent<NavMeshAgent>();
+	//	agent.updateRotation = false; // Tắt việc tự động xoay trong không gian 3D
+	//	agent.updateUpAxis = false;   // Chuyển sang hệ tọa độ 2D (XZ)
+
+	//}
+
 	private void Start()
 	{
-		
-		target = levelManage.Instance.path[pathIndex];
+		agent = GetComponent<NavMeshAgent>();
+		agent.speed = moveSpeed;
+		waypoints = levelManage.Instance.path;
+		if (waypoints.Length > 0)
+		{
+			agent.SetDestination(waypoints[waypointIndex].position);  // Di chuyển đến điểm đầu tiên
+		}
 	}
 
 	private void Update()
 	{
-        if ((Vector2.Distance(target.position,transform.position) <= 0.1f))
-        {
-			pathIndex++;
-			if (pathIndex == levelManage.Instance.path.Length)
-			{
-				enemySpawn.onEnemyDestroy.Invoke();
-				Destroy(gameObject);
-				return;
-			}
-			else
-			{
-				target = levelManage.Instance.path[pathIndex];
-			}
-        }
-    }
-	private void FixedUpdate()
-	{
-		Vector2 dir = (target.position - transform.position).normalized;
-		rb.velocity = dir * moveSpeed;
+		if (!agent.pathPending && agent.remainingDistance < 0.5f)
+		{
+			GoToNextWaypoint();
+		}
 	}
+
+	//private void FixedUpdate()
+	//{
+	//	Vector2 dir = (target.position - transform.position).normalized;
+	//	rb.velocity = dir * moveSpeed;
+	//}
 
 	private void OnCollisionEnter2D(Collision2D collision)
 	{
@@ -59,6 +61,21 @@ public class enemyMovement : MonoBehaviour
 		moveSpeed = _speed;
 	}
 
+
+	private void GoToNextWaypoint()
+	{
+		waypointIndex++;
+		if (waypointIndex < waypoints.Length)
+		{
+			agent.SetDestination(waypoints[waypointIndex].position);  // Cập nhật điểm đến tiếp theo
+		}
+		else
+		{
+			// Đã đến điểm cuối cùng (có thể phá hủy đối tượng hoặc kích hoạt hành động khác)
+			enemySpawn.onEnemyDestroy.Invoke();
+			Destroy(gameObject);
+		}
+	}
 	public void resetSpeed()
 	{
 		moveSpeed = baseSpeed;

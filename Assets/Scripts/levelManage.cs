@@ -7,6 +7,8 @@ public class levelManage : MonoBehaviour
 	public static levelManage Instance { get; private set; }
 
 	[SerializeField] public Transform startPoint;
+	[SerializeField] public Transform endPoint;
+
 	[SerializeField] public Transform[] path;
 
 	private int currency;
@@ -16,7 +18,7 @@ public class levelManage : MonoBehaviour
 		if (Instance == null)
 		{
 			Instance = this;
-			DontDestroyOnLoad(gameObject);
+			//DontDestroyOnLoad(gameObject);
 		}
 		else
 		{
